@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+		<title>sudoku_demo</title>
+	</head>
+	<style scoped>
+	</style>
+
+	<body>
+		<div id="app">
+			<div class="flex flex-col items-center">
+				<p class="p-5 text-3xl">Sudoku Solution Checker</p>
+				<div v-for="(row, rowIndex) in rows" :key="rowIndex" class="mb-3 border border-slate-500">
+					<input v-model="rows[rowIndex]" placeholder="9桁の数字を入力..." maxlength="9" size="9" class="p-0 w-52 text-center" />
+				</div>
+				<button @click="verifySolution" class="p-1 mt-3 rounded-lg border border-slate-500 hover:border-slate-950 hover:font-bold">Check Solution</button>
+				<p v-if="result !== null" class="mt-4">{{ result }}</p>
+			</div>
+		</div>
+		<script>
+			const { createApp, ref } = Vue;
+
+			createApp({
+				setup() {
+					const rows = ref(Array(9).fill(''));
+					const result = ref(null);
+
+					function verifySolution() {
+						const grid = parseInput(rows.value);
+						if (grid && isValidSudoku(grid)) {
+							result.value = 'Congratulations!';
+						} else {
+							result.value = 'Mistake found. Please check your solution.';
+						}
+					}
+					
+					function parseInput(rows) {
+						if (rows.length !== 9) return null;
+
+						const grid = rows.map(row => {
+							const cells = row.trim().split('').map(Number);
+							return cells.length === 9 ? cells : null;
+						});
+
+						return grid.includes(null) ? null : grid;
+					}
+
+					function isValidSudoku(grid) {
+						const isValidRow = row => new Set(row).size === 9;
+						const isValidColumn = col => new Set(col).size === 9;
+						const isValidBox = box => new Set(box).size === 9;
+
+						for (let i = 0; i < 9; i++) {
+							const row = grid[i];
+							const col = grid.map(row => row[i]);
+							const box = [];
+							const startRow = Math.floor(i / 3) * 3;
+							const startCol = (i % 3) * 3;
+							for (let r = 0; r < 3; r++) {
+								for (let c = 0; c < 3; c++) {
+									box.push(grid[startRow + r][startCol + c]);
+								}
+							}
+							if (!isValidRow(row) || !isValidColumn(col) || !isValidBox(box)) {
+								return false;
+							}
+						}
+						return true;
+					}
+
+					return {
+						rows,
+						result,
+						verifySolution,
+						parseInput,
+						isValidSudoku
+					}
+				}
+			}).mount('#app');
+		</script>
+	</body>
+</html>
